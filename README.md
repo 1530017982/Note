@@ -2,8 +2,73 @@
 
 软件工程现场编程项目，用于记录日常收入与支出、查看账单并进行收支统计。
 
-> 当前状态：开发计划与六人任务分配。以下目录、接口及功能为约定方案，尚未实现；运行说明、截图和演示视频在联调完成后补充。
-> 成员按1—6号认领任务；已填写的信息予以保留，其余姓名、学号及GitHub账号请各成员补充。
+> 当前状态：记账、查询、统计、数据存储及前端模块已合入 `main`。后端集成验证102项通过，金额筛选已完成专项验证；完整浏览器流程、跨电脑演示及交付材料仍需按下方清单验收。
+
+## 快速启动（Windows / PowerShell）
+
+### 1. 获取代码
+
+首次运行，在准备保存项目的目录执行：
+
+```powershell
+git clone https://github.com/tw1l1ghtcc/Note.git
+Set-Location '.\Note'
+```
+
+已有仓库时，先进入自己的 Note 目录，使用 `git status` 确认本地改动后，再更新：
+
+```powershell
+git switch main
+git pull --ff-only origin main
+```
+
+若提示本地文件会被覆盖，停止更新并先备份或处理改动，不要强制覆盖。个人账单不会随 Git 拉取更新。
+
+### 2. 检查环境、安装依赖并启动
+
+需要 **Python 3.10或更高版本**，推荐使用本次验证过的 Python 3.12。Windows 可以先执行 `py -0p` 查看已安装的解释器；没有符合版本的解释器时，先从 [Python 官网](https://www.python.org/downloads/windows/) 安装。
+
+在 Note 项目根目录完整执行下列脚本。每一步失败都会停止，避免虚拟环境未创建却继续安装或启动：
+
+```powershell
+& {
+    py -3 -c "import sys; print(sys.version); assert sys.version_info >= (3, 10), '需要 Python 3.10 或以上版本'"
+    if ($LASTEXITCODE -ne 0) { throw 'Python 不可用或版本过低，请先检查 py -0p' }
+
+    if (-not (Test-Path -LiteralPath '.\.venv\Scripts\python.exe')) {
+        py -3 -m venv .venv
+        if ($LASTEXITCODE -ne 0) { throw '虚拟环境创建失败' }
+    }
+
+    & '.\.venv\Scripts\python.exe' -c "import sys; assert sys.version_info >= (3, 10), '虚拟环境版本过低'"
+    if ($LASTEXITCODE -ne 0) { throw '请为项目重新配置 Python 3.10+ 虚拟环境' }
+
+    & '.\.venv\Scripts\python.exe' -m pip install -r requirements.txt
+    if ($LASTEXITCODE -ne 0) { throw '依赖安装失败，请检查网络及 pip 输出' }
+
+    & '.\.venv\Scripts\python.exe' app.py
+}
+```
+
+无需激活虚拟环境或修改 PowerShell 执行策略。如果没有 `py` 命令，但 `python --version` 确实输出3.10以上版本，可把上面的 `py -3` 替换为 `python`。
+
+### 3. 打开页面与日常启动
+
+出现 `Running on http://127.0.0.1:5000` 后，在本机浏览器打开：
+
+**[http://127.0.0.1:5000](http://127.0.0.1:5000)**
+
+保持终端开启；按 **Ctrl+C** 停止服务。默认仅本机可访问。
+
+完成首次安装后，每次进入 Note 目录只需执行：
+
+```powershell
+& '.\.venv\Scripts\python.exe' app.py
+```
+
+数据位于 `data/records.json`，首次读取自动创建，重启服务仍会保留。图表目前从在线 CDN 加载 Chart.js，首次打开需要能访问该 CDN；离线演示前应准备本地依赖。
+
+更多故障排查、当前组长电脑的临时启动命令和测试方法见[第八节](#八运行维护与演示材料)。
 
 ## 一、项目目标与技术方案
 
@@ -14,7 +79,7 @@
 - 用户界面：采用本地 Web 页面，提供录入表单、账单列表和统计看板。
 - 可选加分项：分类支出图、月度收支图；先保证基础功能可演示。
 
-建议技术栈：Python 3.10+、Flask、HTML/CSS、原生 JavaScript、本地 JSON。图表可使用 Chart.js；如使用，应将依赖保存在本地，方便离线演示。
+技术栈：Python 3.10+、Flask、HTML/CSS、原生 JavaScript、本地 JSON；图表使用 Chart.js，当前通过在线 CDN 引入。
 
 ## 二、六人任务分配
 
@@ -42,11 +107,11 @@
 
 ## 三、完整接口与模块对接约定（开发合同 v1）
 
-本节为六人共同遵守的实现约定，尚未代表接口已实现或通过测试。修改字段、函数或事件前，先与调用方确认，并同步本节。
+本节为六人共同遵守的接口约定。核心接口已实现；具体验证范围见快速启动和第八节。修改字段、函数或事件前，先与调用方确认，并同步本节。
 
 ### 3.1 通用规则与数据模型
 
-- 计划本地地址：`http://127.0.0.1:5000`；页面与 API 同源，通过相对路径调用，无需跨域配置。
+- 默认本地地址：`http://127.0.0.1:5000`；页面与 API 同源，通过相对路径调用，无需跨域配置。
 - `GET /` 返回 HTML；`/static/...` 提供静态资源。以下 `/api/*` 接口返回 UTF-8 JSON。
 - POST 请求使用 `Content-Type: application/json`。成功体含 `data`；错误体统一含 `error`、`code`，字段校验错误额外含 `field`。
 - 日期为真实的 `YYYY-MM-DD`，允许补记历史及未来日期；“今天”由浏览器本地年月日生成，避免 UTC 日期偏移。
@@ -245,7 +310,7 @@
 
 ### 3.7 Python模块边界与函数签名
 
-以下为签名约定，不是已实现代码。记录用 `dict`，筛选条件用已校验的 `dict`，避免额外框架依赖。
+以下列出各模块的公共接口。记录用 `dict`，筛选条件用已校验的 `dict`。
 
 | 文件/负责人 | 对外接口 | 行为 |
 | --- | --- | --- |
@@ -333,7 +398,7 @@
 
 ## 四、GitHub 协作规范
 
-1. 本仓库专用于本次现场编程；组长将其他成员添加为协作者。
+1. 本仓库专用于本次现场编程；成员采用 Fork → 本人分支开发 → 向主仓库提交 PR → 审核合并的方式协作，无需添加为协作者。
 2. 每人建立自己的功能分支，例如 `feature/storage`、`feature/records`、`feature/query`、`feature/stats`、`feature/entry-ui`、`feature/dashboard`。
 3. 各成员独立编写并提交本人模块，提交信息说明实际变更，例如 `feat: 新增按日期区间筛选账单`。不伪造作者、不由他人代替完成个人模块。
 4. 每个模块通过 Pull Request 合入 `main`，描述功能、验证结果及依赖；合并时保留各成员的真实提交记录。
@@ -388,6 +453,93 @@
 - 全体：据实际实现选取1—3项亮点，不将计划功能写成已完成成果。
 - 组长：按实际贡献评分，满足“个人分数总和＝小组分数×6，六人分数不能完全相同”的要求。
 
-## 八、运行说明与演示材料
+## 八、运行维护与演示材料
 
-待实现及联调后补充：依赖安装命令、启动命令、访问地址、数据文件位置、软件截图、视频链接、Release 链接及团队博客链接。
+### 8.1 页面使用
+
+1. 在“记一笔”中选择收入或支出，填写日期、金额（元）、类别和可选备注，然后保存。
+2. 在账单区查看最近10条记录，或点击“查看全部记录”；日期相同的记录后新增者优先显示。
+3. 按日期起止、收支类型、类别及最低/最高金额组合筛选；页面金额使用元，接口与文件中使用整数分。
+4. 统计卡片及图表跟随当前筛选，统计全部符合条件的记录，不受列表10条限制。
+5. 删除前确认目标记录；删除成功后列表与统计刷新。停止服务并重新启动，可检查数据是否保留。
+
+### 8.2 数据保存和备份
+
+- 正式账单：项目目录下的 `data/records.json`，由代码位置定位，与启动终端的工作目录无关。
+- 文件不存在时自动初始化；已有空文件、损坏 JSON 或非法记录会报 `STORAGE_ERROR`，不会自动清空。
+- 备份时先停止服务，再复制 `data/records.json`；恢复时也先停止服务，再放回经过校验的备份文件。
+- 实际账单和保存临时文件已加入 `.gitignore`，不随仓库提交。不要把真实收支作为演示数据上传。
+- 当前仅支持单服务进程写同一份数据；进程内读改写由共享可重入锁保护。
+
+### 8.3 测试
+
+在项目根目录、依赖安装完成后执行。两条命令覆盖根目录及 tests 目录；每一步失败即停止：
+
+```powershell
+& {
+    & '.\.venv\Scripts\python.exe' -m unittest -v test_queries
+    if ($LASTEXITCODE -ne 0) { throw '查询测试失败' }
+
+    & '.\.venv\Scripts\python.exe' -m unittest discover -s tests -t . -v
+    if ($LASTEXITCODE -ne 0) { throw '后端及集成测试失败' }
+}
+```
+
+现有验证记录：Python 3.12 + Flask 3.1下，后端102项测试通过，包括真实 JSON 存储与新增、查询、统计、删除的联合调用；前端专项脚本验证了金额精确换算、非法输入不发请求、保留有效筛选、重置及最近/全部切换。完整浏览器交互、图表在线加载和另一台电脑启动仍需实际验收，不能由单元测试替代。
+
+只读接口可在浏览器直接查看：
+
+- [最近账单](http://127.0.0.1:5000/api/records)
+- [全部账单](http://127.0.0.1:5000/api/records?limit=all)
+- [收支统计](http://127.0.0.1:5000/api/stats)
+
+### 8.4 常见问题
+
+| 现象 | 原因与处理 |
+| --- | --- |
+| `python --version` 没输出，或指向 WindowsApps | 可能命中 Windows 的应用执行别名。执行 `py -0p` 查看真实解释器；安装 Python 3.10+ 后使用快速启动中的命令 |
+| 只有 Python 3.9 | 无法原样运行团队当前的类型注解代码，需要安装3.10以上版本 |
+| 找不到 `.venv\\Scripts\\python.exe` | 虚拟环境尚未创建成功。先处理解释器/版本问题，再重新执行创建命令 |
+| `No module named flask` | 使用启动服务的同一解释器安装 requirements.txt；不要混用系统 Python 与虚拟环境 |
+| Git 提示未跟踪或本地文件会被覆盖 | 先备份改动；需要暂存时可使用 `git stash push --include-untracked`，再更新。不要盲目清理或立即恢复旧版覆盖新代码 |
+| 端口5000被占用 | 先检查是否已有本项目服务运行，在对应终端按 Ctrl+C 停止，再启动 |
+| 页面打开但图表报错/空白 | 检查浏览器控制台及 Chart.js CDN 是否可访问；无匹配数据时空图提示属于正常情况 |
+| 显示 STORAGE_ERROR | 保留并备份原账单，检查 JSON 格式和六字段规则；不要直接清空文件 |
+| 保存时网络异常 | 结果可能未确认，先刷新账单核对，避免重复录入 |
+| 修改前端后页面仍是旧版 | 使用 Ctrl+Shift+R 强制刷新 |
+
+### 8.5 组长当前电脑的临时启动环境
+
+这是开发测试时额外准备的本机环境，**不包含在本仓库中，其他成员克隆后不能直接使用**。仅当 Note 与 review-artifacts 位于同一父目录，且以下解释器和依赖目录均存在时适用：
+
+```text
+父目录/
+├── Note/
+└── review-artifacts/
+    ├── note-python312/python.exe
+    └── note-runtime-deps/
+```
+
+在 Note 目录执行：
+
+```powershell
+& {
+    if (-not (Test-Path -LiteralPath '..\review-artifacts\note-python312\python.exe')) {
+        throw '缺少本机临时解释器，请使用文档开头的标准安装方式'
+    }
+    if (-not (Test-Path -LiteralPath '..\review-artifacts\note-runtime-deps\flask')) {
+        throw '缺少本机临时依赖，请使用文档开头的标准安装方式'
+    }
+    & '..\review-artifacts\note-python312\python.exe' -B -X utf8 -c "import sys, runpy; sys.path.insert(0, r'..\review-artifacts\note-runtime-deps'); sys.path.insert(0, '.'); runpy.run_path('app.py', run_name='__main__')"
+}
+```
+
+访问地址和停止方式与标准安装相同。后续交付给其他成员或助教时，应使用仓库开头的标准安装步骤。
+
+### 8.6 演示与提交材料
+
+- 演示顺序：录入收入/支出 → 查看最近与全部记录 → 组合筛选 → 核对统计与图表 → 删除 → 重启确认数据保留。
+- 软件截图、演示视频、团队博客链接：待团队补充真实材料。
+- [GitHub Release](https://github.com/tw1l1ghtcc/Note/releases)：按课程时间要求发布后核查；此链接本身不代表已发布版本。
+- 更详细的后端设计及早期验证记录见 [RUNNING.md](RUNNING.md)；其“模块尚未交付”等描述为早期开发阶段记录，当前启动步骤以本 README 为准。
+
