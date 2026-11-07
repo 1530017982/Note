@@ -15,8 +15,8 @@ const MAX_AMOUNT_CENTS = 999999999;
 const MAX_NOTE_LENGTH = 200;
 const MAX_CATEGORY_LENGTH = 20;
 const CATEGORY_OPTIONS = {
-  income: ["饮食", "交通", "购物", "住房", "其他"],
-  expense: ["工资", "其他"],
+  income: ["工资", "其他"],
+  expense: ["饮食", "交通", "购物", "住房", "其他"],
 };
 
 const form = document.querySelector("#record-form");
