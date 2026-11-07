@@ -13,7 +13,7 @@ from errors import AppError
 
 
 def storage_error():
-    """Construct a simulated failure using only the public AppError contract."""
+    """仅使用公共异常接口模拟存储失败，不依赖存储层内部实现。"""
     return AppError(500, "STORAGE_ERROR", "账单数据读写失败")
 
 

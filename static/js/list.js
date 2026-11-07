@@ -87,6 +87,7 @@ function buildFilterPanel() {
     ['f-start','f-end','f-type','f-cat','f-min','f-max'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
+    // 程序直接清空 value 不会触发输入事件，需同步恢复中文占位提示。
     startDate.syncPlaceholder();
     endDate.syncPlaceholder();
     refreshAll();
@@ -139,7 +140,7 @@ async function loadRecords() {
 
   try {
     const json = await fetchJSON(`/api/records?${params.toString()}`);
-    if (myId !== reqId) return;
+    if (myId !== reqId) return; // 只渲染最后一次筛选的响应。
     const records = (json && json.data) ? json.data : [];
     renderList(records);
     if (listMsg) { listMsg.textContent = ''; listMsg.className = 'message'; }

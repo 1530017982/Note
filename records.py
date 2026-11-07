@@ -57,6 +57,7 @@ def unsupported_media_type() -> AppError:
 
 
 def is_valid_date(value) -> bool:
+    """分别检查日期格式和真实日历日期，避免仅靠字符串长度判断。"""
     if not isinstance(value, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
         return False
     try:
@@ -71,6 +72,7 @@ def is_valid_record_type(value) -> bool:
 
 
 def is_valid_amount(value) -> bool:
+    # 金额只接受整数分；严格类型判断会排除布尔值和小数。
     return type(value) is int and MIN_AMOUNT <= value <= MAX_AMOUNT
 
 

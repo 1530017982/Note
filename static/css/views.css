@@ -99,9 +99,10 @@
 
 /* 列表 */
 #record-list {
+  /* 固定展示高度；账单增加时只滚动列表，不持续拉长整页。 */
   height: 440px;
   overflow-y: auto;
-  scrollbar-gutter: stable;
+  scrollbar-gutter: stable; /* 为滚动条预留空间，避免内容宽度跳动。 */
   overscroll-behavior-y: contain;
   padding: 2px 8px 2px 2px;
 }

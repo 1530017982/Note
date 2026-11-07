@@ -85,6 +85,7 @@ def run_read_only(data_file: Path) -> int:
 def run_demo(data_file: Path) -> int:
     from app import create_app  # 延迟导入：确保 storage.DATA_FILE 已重定向
 
+    # 测试客户端直接走应用路由，无需另起 HTTP 服务即可演示业务链路。
     client = create_app().test_client()
 
     show(f"演示用数据文件：{data_file}")

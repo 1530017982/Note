@@ -1,6 +1,6 @@
 // dashboard.js —— 6号：统计看板 + 图表
 // 导出 refreshDashboard(filters)，由 list.js 调用
-// 不在 HTML 中重复载入，不自行初始化请求，不绑定事件
+// 刷新由 list.js 统一发起，本模块不自行初始化请求或绑定事件
 // filters：六键可选筛选（start_date/end_date/type/category/min_amount/max_amount），缺失/空值不发送
 // 金额为整数分；列表的 limit 不传给统计
 
@@ -15,6 +15,7 @@ function yuan(cents) {
 }
 
 function destroyCharts() {
+  // 重绘前释放旧实例，避免同一画布重复绑定图表。
   try { catChartInst?.destroy(); catChartInst = null; } catch {}
   try { monChartInst?.destroy(); monChartInst = null; } catch {}
 }
@@ -33,7 +34,7 @@ export async function refreshDashboard(filters = {}) {
     const data = await fetchJSON(`/api/stats?${params.toString()}`);
     if (myId !== reqId) return; // 旧请求丢弃，防过快切换覆盖
 
-    const d = data.data || {};
+    const d = data.data || {}; // 统一接口将统计对象放在 data 字段中。
     const income = d.income || 0;
     const expense = d.expense || 0;
     const balance = d.balance ?? (income - expense);
@@ -73,7 +74,7 @@ function renderCategoryChart(byCategory) {
   destroyCharts();
 
   const labels = byCategory.map(i => i.category || '未分类');
-  const data = byCategory.map(i => (Number(i.expense) || 0) / 100);
+  const data = byCategory.map(i => (Number(i.expense) || 0) / 100); // 图表展示元。
 
   if (!labels.length || data.every(v => v === 0)) {
     canvas.style.display = 'none';

@@ -34,6 +34,7 @@ def without(field: str) -> dict:
 
 
 class ValidatePayloadTests(unittest.TestCase):
+    """输入校验直接调用业务函数，检查边界与错误字段。"""
     def test_valid_payload_is_normalized(self):
         result = validate_payload(
             payload(category="  饮食  ", note="  午餐  ", amount=1250)
@@ -248,6 +249,7 @@ class DeleteRecordTests(DataFileTestCase):
 
 
 class RecordsRouteTests(DataFileTestCase):
+    """使用真实入口与临时文件验证新增、删除及错误状态码。"""
     def setUp(self):
         super().setUp()
         self.client = build_test_app().test_client()

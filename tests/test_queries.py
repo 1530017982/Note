@@ -40,6 +40,7 @@ def record(number, day, kind, amount, category):
 
 
 class QueryTests(unittest.TestCase):
+    """隔离验证参数解析、组合条件、排序、条数限制和路由响应。"""
     def setUp(self):
         self.rows = [
             record(1, "2026-11-07", "income", 10000, "工资"),

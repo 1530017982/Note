@@ -1,4 +1,4 @@
-"""Storage failure/recovery tests and real query/statistics integration tests."""
+"""验证存储故障保护及真实记账、查询、统计模块的集成，使用独立临时账单。"""
 
 import copy
 import importlib.util
@@ -26,6 +26,7 @@ def example_record(**changes):
 
 
 class StorageTests(unittest.TestCase):
+    """覆盖持久化、校验、原文件保护与进程内并发读写。"""
     def setUp(self):
         self.directory = TemporaryDirectory(dir=Path(__file__).resolve().parents[1])
         self.addCleanup(self.directory.cleanup)
@@ -141,6 +142,7 @@ class StorageTests(unittest.TestCase):
 
 
 class ApplicationTests(unittest.TestCase):
+    """通过真实应用工厂验证路由整合、页面入口和统一错误响应。"""
     def setUp(self):
         self.directory = TemporaryDirectory(dir=Path(__file__).resolve().parents[1])
         self.addCleanup(self.directory.cleanup)

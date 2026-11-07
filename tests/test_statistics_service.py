@@ -1,4 +1,4 @@
-"""统计模块合同测试：Flask 使用真实测试客户端，未交付依赖使用替身。"""
+"""统计模块单元测试：使用真实 Flask 客户端，以替身隔离查询和存储依赖。"""
 
 import copy
 import sys
@@ -23,6 +23,7 @@ class ContractError(Exception):
 
 
 class StatisticsTests(unittest.TestCase):
+    """检查汇总口径、接口包装及依赖调用，不读写正式账单。"""
     def setUp(self):
         self.records = [
             dict(id="1", date="2026-11-07", type="income",

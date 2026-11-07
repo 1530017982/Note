@@ -19,6 +19,7 @@ def summarize_records(records: list[dict]) -> dict:
     expense = 0
     count = 0
 
+    # 首次遇到类别或月份时自动初始化两个方向的金额，避免漏记或重复分支。
     category_totals = defaultdict(
         lambda: {"income": 0, "expense": 0}
     )
@@ -30,7 +31,7 @@ def summarize_records(records: list[dict]) -> dict:
         record_type = record["type"]
         amount = record["amount"]
         category = record["category"]
-        month = record["date"][:7]
+        month = record["date"][:7]  # 标准日期前七位即 YYYY-MM 分组键。
 
         if record_type not in ("income", "expense"):
             raise ValueError("账单类型必须是 income 或 expense")
@@ -51,6 +52,7 @@ def summarize_records(records: list[dict]) -> dict:
         month_totals[month][record_type] += amount
         count += 1
 
+    # 按类别和月份排序，确保前端图表顺序稳定。
     by_category = [
         {
             "category": category,
@@ -104,6 +106,7 @@ def statistics_route():
     """返回统计结果；参数校验及重复参数检测统一由查询模块完成。"""
     from queries import parse_query
 
+    # 统计涵盖全部匹配账单，明确拒绝列表的条数限制。
     filters, _ = parse_query(request.args, allow_limit=False)
     return jsonify({"data": get_statistics(filters)})
 

@@ -15,6 +15,7 @@ const MAX_AMOUNT_CENTS = 999999999;
 const MAX_NOTE_LENGTH = 200;
 const MAX_CATEGORY_LENGTH = 20;
 const CATEGORY_OPTIONS = {
+  // 仅控制录入选项；切换类型不会修改已保存的历史账单。
   income: ["工资", "其他"],
   expense: ["饮食", "交通", "购物", "住房", "其他"],
 };
@@ -118,7 +119,7 @@ function syncCategoryOptions() {
   if (!form || !categoryInput) return;
   const type = form.querySelector('input[name="type"]:checked')?.value;
   const categories = CATEGORY_OPTIONS[type] || [];
-  const previous = categoryInput.value;
+  const previous = categoryInput.value; // 两种类型共有的“其他”可保留。
   const placeholder = document.createElement("option");
   placeholder.value = "";
   placeholder.textContent = "请选择类别";
@@ -213,6 +214,7 @@ async function handleSubmit(event) {
   }
 
   try {
+    // 按钮在请求期间禁用；只有服务端返回成功后才清空表单并通知刷新。
     const response = await fetch("/api/records", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

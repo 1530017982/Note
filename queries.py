@@ -25,6 +25,7 @@ def _invalid(field: str, message: str) -> None:
 
 
 def _parse_date(value: str, field: str) -> str:
+    """验证标准日期字符串，保留可直接比较先后顺序的 YYYY-MM-DD 格式。"""
     if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
         _invalid(field, "日期必须为YYYY-MM-DD格式的真实日期")
     try:
@@ -60,6 +61,7 @@ def parse_query(args, *, allow_limit: bool) -> tuple[dict, int | str | None]:
     for key in args:
         if key not in allowed:
             _invalid(key, f"不支持的查询参数：{key}")
+        # HTTP查询同名参数可能重复，必须检查原始列表而非直接取首值。
         items = args.getlist(key) if hasattr(args, "getlist") else [args[key]]
         if len(items) != 1:
             _invalid(key, f"查询参数{key}不能重复")
@@ -67,6 +69,7 @@ def parse_query(args, *, allow_limit: bool) -> tuple[dict, int | str | None]:
             _invalid(key, f"查询参数{key}必须为字符串")
         values[key] = items[0].strip() or None
 
+    # 固定六键结构；缺失条件统一为 None，便于查询和统计复用。
     filters = {key: values.get(key) for key in FILTER_KEYS}
     for key in ("start_date", "end_date"):
         if filters[key] is not None:
@@ -139,6 +142,7 @@ def query_records(filters: dict, limit: int | str = 10) -> dict:
     selected = ordered if limit == "all" else ordered[:limit]
     return {
         "data": selected,
+        # total 是截取前的匹配数，returned 才是本次响应中的记录数。
         "meta": {"total": len(ordered), "returned": len(selected), "limit": limit},
     }
 
