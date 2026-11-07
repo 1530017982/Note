@@ -2,8 +2,13 @@
 
 from collections import defaultdict
 
+from flask import Blueprint, jsonify, request
 
-def calculate_stats(records):
+
+stats_bp = Blueprint("stats", __name__)
+
+
+def summarize_records(records: list[dict]) -> dict:
     """
     统计传入的全部账单。
 
@@ -12,6 +17,7 @@ def calculate_stats(records):
     """
     income = 0
     expense = 0
+    count = 0
 
     category_totals = defaultdict(
         lambda: {"income": 0, "expense": 0}
@@ -43,6 +49,7 @@ def calculate_stats(records):
 
         category_totals[category][record_type] += amount
         month_totals[month][record_type] += amount
+        count += 1
 
     by_category = [
         {
@@ -66,9 +73,39 @@ def calculate_stats(records):
         "income": income,
         "expense": expense,
         "balance": income - expense,
+        "count": count,
         "by_category": by_category,
         "by_month": by_month,
     }
+
+
+def calculate_stats(records):
+    """保留旧入口，现有调用方可逐步迁移到 summarize_records。"""
+    return summarize_records(records)
+
+
+def get_statistics(filters: dict) -> dict:
+    """读取一次快照，复用查询模块筛选全部匹配记录后汇总。
+
+    filters 是 parse_query 校验后的六键字典，不包含 limit。
+    延迟导入允许在存储、查询模块尚未交付时独立验证纯汇总。
+    存储和校验异常交给 app.py 的公共错误处理器处理。
+    """
+    from storage import load_records
+    from queries import filter_records
+
+    records = load_records()
+    matched_records = filter_records(records, filters)
+    return summarize_records(matched_records)
+
+
+@stats_bp.get("/api/stats")
+def statistics_route():
+    """返回统计结果；参数校验及重复参数检测统一由查询模块完成。"""
+    from queries import parse_query
+
+    filters, _ = parse_query(request.args, allow_limit=False)
+    return jsonify({"data": get_statistics(filters)})
 
 
 def run_self_test():
@@ -103,16 +140,18 @@ def run_self_test():
     ]
 
     # 验证 README 中的例子：100元 - 12.50元 = 87.50元。
-    basic = calculate_stats(records[:2])
+    basic = summarize_records(records[:2])
     assert basic["income"] == 10000
     assert basic["expense"] == 1250
     assert basic["balance"] == 8750
+    assert basic["count"] == 2
 
     # 验证跨月份和相同类别的累加。
-    result = calculate_stats(records)
+    result = summarize_records(records)
     assert result["income"] == 10000
     assert result["expense"] == 1750
     assert result["balance"] == 8250
+    assert result["count"] == 3
 
     categories = {
         item["category"]: item
@@ -126,16 +165,20 @@ def run_self_test():
     ]
 
     # 验证空数据。
-    assert calculate_stats([]) == {
+    assert summarize_records([]) == {
         "income": 0,
         "expense": 0,
         "balance": 0,
+        "count": 0,
         "by_category": [],
         "by_month": [],
     }
 
     # 验证统计不会被默认列表的10条限制。
-    assert calculate_stats([records[0]] * 11)["income"] == 110000
+    many = summarize_records([records[0]] * 11)
+    assert many["income"] == 110000
+    assert many["count"] == 11
+    assert calculate_stats(records) == result
 
     print("全部自测通过")
     print("示例：收入100.00元，支出12.50元，结余87.50元")
