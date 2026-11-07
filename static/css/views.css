@@ -1,9 +1,179 @@
-/* 6号：账单列表、筛选控件、统计卡片与图表样式
- *
- * 本文件由 templates/index.html 在 main.css 之后引入。
- * 5号 建立占位文件，确保页面不出现 404，并在其中追加实现。
- * 5号 不在本文件写样式，避免与 6号 的改动冲突。
- *
- * 已由 main.css 提供的基础元素（表格、按钮、提示条、字段）可直接复用，
- * 新样式建议沿用 main.css :root 中的颜色变量，便于统一主题。
- */
+/* views.css —— 6号：列表/统计/图表样式，配合5号 main.css 使用 */
+
+/* 筛选 */
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.filter-input {
+  padding: 8px 10px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 7px;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+}
+
+.btn {
+  padding: 9px 16px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--pri, #6366f1);
+  color: #fff;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border, #e2e8f0);
+  color: var(--text, #1e293b);
+}
+
+/* KPI 卡片 */
+.kpi-card-wrapper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.kpi {
+  text-align: center;
+  padding: 14px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.kpi span {
+  display: block;
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.kpi strong {
+  font-size: 22px;
+}
+
+.kpi.income strong { color: #10b981; }
+.kpi.expense strong { color: #ef4444; }
+.kpi.balance strong { color: #6366f1; }
+
+/* 图表 */
+.charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.chart-box {
+  position: relative;
+  height: 220px;
+}
+
+.chart-box canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 列表 */
+.record-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.record-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.record-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.record-date {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.record-cat {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.record-note {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.record-amount-box {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.record-amount {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.record-amount.income { color: #10b981; }
+.record-amount.expense { color: #ef4444; }
+
+.del-btn {
+  display: block;
+  margin-top: 6px;
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #ef4444;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+
+.del-btn:hover { background: #fee2e2; }
+
+/* 提示 */
+.empty-tip {
+  color: #6b7280;
+  text-align: center;
+  padding: 20px;
+}
+
+.message {
+  font-size: 13px;
+}
+
+.message.error {
+  color: #ef4444;
+}
+
+@media (max-width: 720px) {
+  .filter-grid { grid-template-columns: 1fr 1fr; }
+  .kpi-card-wrapper { grid-template-columns: 1fr; }
+  .charts { grid-template-columns: 1fr; }
+}
