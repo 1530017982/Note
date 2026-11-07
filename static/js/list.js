@@ -1,17 +1,36 @@
 // list.js —— 6号：列表渲染、筛选、删除
 // 导入 dashboard 的 refreshDashboard，不重复写统计逻辑
 // 维护唯一筛选状态；初次加载、筛选/重置、records-changed 事件时同时刷新列表与看板
-// 列表 limit 单独保存，不传给统计
+// 列表加载全部匹配记录，limit 仅传给列表，不传给统计
 // 切换筛选过快时通过请求序号防止旧响应覆盖新结果
 
 import { fetchJSON } from './api.js';
 import { refreshDashboard } from './dashboard.js';
 
-const state = { filters: {}, listLimit: 10 };
+const state = { filters: {} };
 let reqId = 0;
 
 function yuan(cents) {
   return ((Number(cents) || 0) / 100).toFixed(2);
+}
+
+// 保留原生日期选择器，用中文覆盖浏览器自带的空日期占位文字。
+function createDateFilter(id, label) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'date-filter is-empty';
+  const input = document.createElement('input');
+  input.type = 'date'; input.id = id;
+  input.className = 'filter-input filter-date-input';
+  input.setAttribute('aria-label', label);
+  const placeholder = document.createElement('span');
+  placeholder.className = 'date-filter-placeholder';
+  placeholder.textContent = '年/月/日';
+  placeholder.setAttribute('aria-hidden', 'true');
+  const syncPlaceholder = () => wrapper.classList.toggle('is-empty', !input.value);
+  input.addEventListener('input', syncPlaceholder);
+  input.addEventListener('change', syncPlaceholder);
+  wrapper.append(input, placeholder);
+  return { wrapper, input, syncPlaceholder };
 }
 
 // ---------- 筛选控件注入 #filter-panel ----------
@@ -20,10 +39,8 @@ function buildFilterPanel() {
   if (!panel || panel.dataset.bound) return;
   panel.dataset.bound = '1';
 
-  const startInput = document.createElement('input');
-  startInput.type = 'date'; startInput.id = 'f-start'; startInput.className = 'filter-input';
-  const endInput = document.createElement('input');
-  endInput.type = 'date'; endInput.id = 'f-end'; endInput.className = 'filter-input';
+  const startDate = createDateFilter('f-start', '开始日期');
+  const endDate = createDateFilter('f-end', '结束日期');
   const typeSelect = document.createElement('select');
   typeSelect.id = 'f-type'; typeSelect.className = 'filter-input';
   typeSelect.innerHTML = '<option value="">全部</option><option value="income">收入</option><option value="expense">支出</option>';
@@ -44,7 +61,7 @@ function buildFilterPanel() {
   resetBtn.type = 'button'; resetBtn.id = 'f-reset'; resetBtn.className = 'btn btn-ghost'; resetBtn.textContent = '重置';
 
   const grid1 = document.createElement('div'); grid1.className = 'filter-grid';
-  grid1.append(startInput, endInput, typeSelect, catInput);
+  grid1.append(startDate.wrapper, endDate.wrapper, typeSelect, catInput);
   const grid2 = document.createElement('div'); grid2.className = 'filter-grid';
   grid2.append(minInput, maxInput, applyBtn, resetBtn);
   panel.append(grid1, grid2);
@@ -70,6 +87,8 @@ function buildFilterPanel() {
     ['f-start','f-end','f-type','f-cat','f-min','f-max'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
+    startDate.syncPlaceholder();
+    endDate.syncPlaceholder();
     refreshAll();
   });
 }
@@ -113,7 +132,7 @@ async function loadRecords() {
   const params = new URLSearchParams();
   for (const [k, v] of Object.entries(state.filters)) if (v) params.append(k, v);
   // limit 单独给列表，不进统计
-  params.append('limit', state.listLimit === 'all' ? 'all' : String(state.listLimit));
+  params.append('limit', 'all');
 
   const listMsg = document.getElementById('list-message');
   if (listMsg) { listMsg.textContent = '加载中…'; listMsg.className = 'message'; }
@@ -230,11 +249,6 @@ document.addEventListener('records-changed', refreshAll);
 // ---------- 初始化 ----------
 window.addEventListener('DOMContentLoaded', () => {
   buildFilterPanel();
-
-  const showAll = document.getElementById('show-all');
-  const showRecent = document.getElementById('show-recent');
-  if (showAll) showAll.addEventListener('click', () => { state.listLimit = 'all'; loadRecords(); });
-  if (showRecent) showRecent.addEventListener('click', () => { state.listLimit = 10; loadRecords(); });
 
   refreshAll();
 });

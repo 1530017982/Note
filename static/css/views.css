@@ -38,15 +38,21 @@
   color: var(--text, #1e293b);
 }
 
-/* 列表操作 */
-.list-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 14px;
+/* 空日期显示单字中文；不覆盖右侧原生日期选择按钮。 */
+.date-filter { position: relative; min-width: 0; }
+.filter-date-input { min-width: 0; }
+.date-filter-placeholder {
+  display: none;
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted, #6b7280);
+  pointer-events: none;
 }
-.list-actions .btn {
-  flex: 1;
-}
+.date-filter.is-empty:not(:focus-within) .date-filter-placeholder { display: block; }
+.date-filter.is-empty:not(:focus-within) .filter-date-input { color: transparent; }
+.date-filter.is-empty:not(:focus-within) .filter-date-input::-webkit-datetime-edit { color: transparent; }
 
 /* KPI 卡片 */
 .kpi-card-wrapper {
@@ -92,6 +98,18 @@
 }
 
 /* 列表 */
+#record-list {
+  height: 440px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior-y: contain;
+  padding: 2px 8px 2px 2px;
+}
+#record-list:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 3px;
+}
+.record-cat, .record-note { overflow-wrap: anywhere; }
 .record-list {
   list-style: none;
   margin: 0;
@@ -169,5 +187,5 @@
   .filter-grid { grid-template-columns: 1fr 1fr; }
   .kpi-card-wrapper { grid-template-columns: 1fr; }
   .charts { grid-template-columns: 1fr; }
-  .list-actions { flex-direction: column; }
+  #record-list { height: 360px; }
 }
