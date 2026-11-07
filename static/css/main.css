@@ -1,0 +1,496 @@
+/* 5号：主页面整体样式
+   约定：列表与统计卡片内部样式由 6号 的 views.css 负责，这里只提供
+   页面骨架、录入表单以及表格/按钮等基础元素样式。 */
+
+:root {
+  color-scheme: light;
+  --bg: #f4f6f8;
+  --panel: #ffffff;
+  --text: #1f2328;
+  --text-soft: #4b5563;
+  --muted: #6b7280;
+  --line: #e4e7ec;
+  --line-strong: #d0d5dd;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-soft: #eff4ff;
+  --expense: #d9480f;
+  --income: #2f9e44;
+  --error: #b42318;
+  --error-soft: #fef3f2;
+  --success: #067647;
+  --success-soft: #ecfdf3;
+  --info-soft: #f2f5f9;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
+    "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.3;
+}
+
+p {
+  margin: 0;
+}
+
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--info-soft);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ---------- 页头 / 页脚 ---------- */
+
+.site-header {
+  padding: 28px 0 22px;
+  background: linear-gradient(120deg, #1e3a8a, #2563eb 55%, #3b82f6);
+  color: #fff;
+}
+
+.site-header h1 {
+  font-size: 24px;
+  letter-spacing: 0.5px;
+}
+
+.site-subtitle {
+  margin-top: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.site-footer {
+  padding: 26px 0 34px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- 布局 ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  padding-top: 22px;
+  padding-bottom: 8px;
+}
+
+.stack {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.card {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  min-width: 0;
+}
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.card-head h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.card-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.entry-card {
+  position: sticky;
+  top: 20px;
+  /* 卡片高度可能超过视口，允许内部滚动，避免提交按钮停在视口外 */
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ---------- 表单 ---------- */
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label,
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+input[type="text"],
+input[type="date"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:hover,
+select:hover {
+  border-color: #b9c0cb;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"] {
+  border-color: var(--error);
+  background: #fffbfa;
+}
+
+input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.14);
+}
+
+input::placeholder {
+  color: #9aa3af;
+}
+
+.hint {
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 收入 / 支出分段切换 */
+
+.type-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 11px;
+  background: var(--info-soft);
+}
+
+.type-option {
+  position: relative;
+  display: block;
+  margin: 0;
+  cursor: pointer;
+}
+
+.type-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.type-option span {
+  display: block;
+  padding: 7px 4px;
+  border-radius: 8px;
+  color: var(--text-soft);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.type-option:hover span {
+  color: var(--text);
+}
+
+.type-option input:checked + span {
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12);
+}
+
+.type-option input:focus-visible + span {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.22);
+}
+
+.type-option input[value="expense"]:checked + span {
+  color: var(--expense);
+}
+
+.type-option input[value="income"]:checked + span {
+  color: var(--income);
+}
+
+.form-actions {
+  margin-top: 20px;
+}
+
+/* ---------- 按钮 ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:hover {
+  background: #f7f8fa;
+}
+
+.btn-primary {
+  width: 100%;
+  height: 44px;
+  border-color: transparent;
+  background: var(--primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn-primary:disabled {
+  background: #93b0f5;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: transparent;
+}
+
+.btn-danger {
+  border-color: #f2c7c3;
+  color: var(--error);
+}
+
+.btn-danger:hover {
+  background: var(--error-soft);
+}
+
+/* ---------- 提示信息 ---------- */
+
+.message:empty {
+  display: none;
+}
+
+.message {
+  margin-top: 14px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--info-soft);
+  font-size: 13px;
+  color: var(--text-soft);
+  overflow-wrap: anywhere;
+}
+
+.message--error {
+  border-color: #f9d3ce;
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.message--success {
+  border-color: #c7eed6;
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.message--info {
+  border-color: var(--line);
+  background: var(--info-soft);
+  color: var(--text-soft);
+}
+
+#list-message,
+#stats-message {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+/* ---------- 6号 渲染区域的基础样式 ---------- */
+
+.panel-slot {
+  min-height: 56px;
+  min-width: 0;
+}
+
+/* 窄屏下账单表格允许横向滚动，避免挤压列宽 */
+#record-list {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th,
+td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+td {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 图表容器：给 Chart.js 一个确定高度的父元素，避免高度塌陷 */
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.chart-box {
+  position: relative;
+  height: 220px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fcfcfd;
+}
+
+.chart-box canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ---------- 响应式 ---------- */
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 18px;
+  }
+
+  .entry-card {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    font-size: 14px;
+  }
+
+  .wrap {
+    padding: 0 14px;
+  }
+
+  .site-header {
+    padding: 20px 0 16px;
+  }
+
+  .site-header h1 {
+    font-size: 20px;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .card-head {
+    margin-bottom: 14px;
+  }
+
+  .btn {
+    padding: 9px 12px;
+  }
+
+  .chart-box {
+    height: 180px;
+  }
+}

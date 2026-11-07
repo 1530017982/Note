@@ -19,25 +19,13 @@
 
 from __future__ import annotations
 
+from datetime import date
+import re
+
 from flask import Blueprint, jsonify, request
 
-from errors import (
-    AppError,
-    invalid_json,
-    record_not_found,
-    unsupported_media_type,
-    validation_error,
-)
+from errors import AppError
 from storage import (
-    MAX_AMOUNT,
-    MAX_CATEGORY_LENGTH,
-    MAX_NOTE_LENGTH,
-    MIN_AMOUNT,
-    is_valid_amount,
-    is_valid_category,
-    is_valid_date,
-    is_valid_note,
-    is_valid_record_type,
     load_records,
     new_record_id,
     records_lock,
@@ -45,6 +33,53 @@ from storage import (
 )
 
 records_bp = Blueprint("records", __name__)
+
+MIN_AMOUNT = 1
+MAX_AMOUNT = 999999999
+MAX_CATEGORY_LENGTH = 20
+MAX_NOTE_LENGTH = 200
+
+
+def validation_error(message: str, field: str | None = None) -> AppError:
+    return AppError(400, "VALIDATION_ERROR", message, field)
+
+
+def invalid_json(message: str = "请求体必须是合法的 JSON 对象") -> AppError:
+    return AppError(400, "INVALID_JSON", message)
+
+
+def record_not_found(record_id: str) -> AppError:
+    return AppError(404, "RECORD_NOT_FOUND", f"账单记录不存在：{record_id}")
+
+
+def unsupported_media_type() -> AppError:
+    return AppError(415, "UNSUPPORTED_MEDIA_TYPE", "请使用 application/json 提交请求")
+
+
+def is_valid_date(value) -> bool:
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
+        return False
+    try:
+        date.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
+
+
+def is_valid_record_type(value) -> bool:
+    return isinstance(value, str) and value in ("income", "expense")
+
+
+def is_valid_amount(value) -> bool:
+    return type(value) is int and MIN_AMOUNT <= value <= MAX_AMOUNT
+
+
+def is_valid_category(value) -> bool:
+    return isinstance(value, str) and value == value.strip() and 1 <= len(value) <= MAX_CATEGORY_LENGTH
+
+
+def is_valid_note(value) -> bool:
+    return isinstance(value, str) and value == value.strip() and len(value) <= MAX_NOTE_LENGTH
 
 # 客户端可提交的字段；id 由服务端生成，因此不在其中（§3.1）。
 ACCEPTED_FIELDS = ("date", "type", "amount", "category", "note")

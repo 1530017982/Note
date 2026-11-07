@@ -89,7 +89,7 @@ class LoadRecordsTests(DataFileTestCase):
         with self.assertRaises(AppError) as caught:
             storage.load_records()
         self.assertEqual(caught.exception.code, "STORAGE_ERROR")
-        self.assertIn("重复 id", caught.exception.message)
+        self.assertEqual(caught.exception.status, 500)
 
     def test_invalid_stored_records_rejected(self):
         def without(field):

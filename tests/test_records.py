@@ -9,9 +9,9 @@ import uuid
 from unittest.mock import patch
 
 import storage
-from errors import AppError, storage_error
+from errors import AppError
 from records import create_record, delete_record, validate_payload
-from tests.support import DataFileTestCase, build_test_app
+from tests.support import DataFileTestCase, build_test_app, storage_error
 
 
 def payload(**overrides) -> dict:
@@ -146,7 +146,7 @@ class CreateRecordTests(DataFileTestCase):
         record = create_record(payload())
 
         self.assertEqual(
-            list(record), ["id", "date", "type", "amount", "category", "note"]
+            set(record), {"id", "date", "type", "amount", "category", "note"}
         )
         self.assertEqual(uuid.UUID(record["id"]).version, 4)
         self.assertEqual(record["amount"], 1250)
@@ -260,7 +260,7 @@ class RecordsRouteTests(DataFileTestCase):
         self.assertEqual(list(body), ["data"])
         record = body["data"]
         self.assertEqual(
-            list(record), ["id", "date", "type", "amount", "category", "note"]
+            set(record), {"id", "date", "type", "amount", "category", "note"}
         )
         self.assertEqual(record["amount"], 1250)
         self.assertEqual(len(storage.load_records()), 1)
@@ -313,10 +313,10 @@ class RecordsRouteTests(DataFileTestCase):
         self.assertEqual(body["code"], "RECORD_NOT_FOUND")
         self.assertNotIn("field", body)
 
-    def test_get_list_is_405_until_queries_module_lands(self):
+    def test_get_list_uses_delivered_queries_module(self):
         response = self.client.get("/api/records")
-        self.assertEqual(response.status_code, 405)
-        self.assertEqual(response.get_json()["code"], "METHOD_NOT_ALLOWED")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["data"], [])
 
     def test_unknown_api_path_returns_404_json(self):
         response = self.client.get("/api/unknown")

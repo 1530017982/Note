@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>记账本 · 个人收支记录</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <!-- 6号 负责的列表/统计样式，须在 main.css 之后引入 -->
+  <link rel="stylesheet" href="/static/css/views.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <h1>记账本</h1>
+      <p class="site-subtitle">记下每一笔收入与支出，随时查看账单和收支情况</p>
+    </div>
+  </header>
+
+  <main class="wrap layout">
+    <!-- 录入区：5号负责 -->
+    <section class="card entry-card" aria-labelledby="entry-title">
+      <div class="card-head">
+        <h2 id="entry-title">记一笔</h2>
+        <span class="card-note">金额单位为元，最多两位小数</span>
+      </div>
+
+      <form id="record-form" novalidate>
+        <div class="field">
+          <span class="field-label" id="type-label">收支类型</span>
+          <div class="type-switch" role="radiogroup" aria-labelledby="type-label">
+            <label class="type-option">
+              <input type="radio" name="type" value="expense" checked>
+              <span>支出</span>
+            </label>
+            <label class="type-option">
+              <input type="radio" name="type" value="income">
+              <span>收入</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="record-date">日期</label>
+          <input id="record-date" name="date" type="date" required>
+          <p class="hint">默认取今天的本地日期，可补记历史或预填将来日期</p>
+        </div>
+
+        <div class="field">
+          <label for="record-amount">金额（元）</label>
+          <input id="record-amount" name="amount" type="text" inputmode="decimal"
+                 autocomplete="off" placeholder="0.00" required>
+          <p class="hint">例如 12.50；不接受负数、0 和三位以上小数</p>
+        </div>
+
+        <div class="field">
+          <label for="record-category">类别</label>
+          <input id="record-category" name="category" type="text" list="category-options"
+                 autocomplete="off" placeholder="饮食 / 交通 / 购物……" required>
+          <datalist id="category-options">
+            <option value="饮食"></option>
+            <option value="交通"></option>
+            <option value="购物"></option>
+            <option value="工资"></option>
+            <option value="其他"></option>
+          </datalist>
+          <p class="hint">也可自行输入，1—20 个字符</p>
+        </div>
+
+        <div class="field">
+          <label for="record-note">备注<span class="optional">（可选）</span></label>
+          <input id="record-note" name="note" type="text"
+                 autocomplete="off" placeholder="例如：公司楼下午餐">
+          <p class="hint">最多 200 个字符</p>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="record-submit">保存这笔</button>
+        </div>
+
+        <div id="record-message" class="message" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <!-- 右列：列表与统计的容器由5号提供，内容由6号渲染 -->
+    <div class="stack">
+      <section class="card" aria-labelledby="list-title">
+        <div class="card-head">
+          <h2 id="list-title">账单</h2>
+          <span class="card-note">按日期倒序，先筛选后排序</span>
+        </div>
+        <div id="filter-panel" class="panel-slot" aria-label="账单筛选"></div>
+        <div id="list-message" class="message" role="status" aria-live="polite"></div>
+        <div id="record-list" class="panel-slot" aria-label="账单列表"></div>
+      </section>
+
+      <section class="card" aria-labelledby="stats-title">
+        <div class="card-head">
+          <h2 id="stats-title">统计</h2>
+          <span class="card-note">跟随当前筛选条件计算</span>
+        </div>
+        <div id="stats-message" class="message" role="status" aria-live="polite"></div>
+        <div id="stats-panel" class="panel-slot" aria-label="收支统计"></div>
+        <div class="charts">
+          <div class="chart-box">
+            <canvas id="category-chart" role="img" aria-label="分类支出图"></canvas>
+          </div>
+          <div class="chart-box">
+            <canvas id="monthly-chart" role="img" aria-label="月度收支图"></canvas>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>数据保存在本地 <code>data/records.json</code>，关闭再打开程序后仍然可读。</p>
+    </div>
+  </footer>
+
+  <script type="module" src="/static/js/entry.js"></script>
+  <script type="module" src="/static/js/list.js"></script>
+</body>
+</html>

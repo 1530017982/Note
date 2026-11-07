@@ -10,6 +10,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 import storage
+from errors import AppError
+
+
+def storage_error():
+    """Construct a simulated failure using only the public AppError contract."""
+    return AppError(500, "STORAGE_ERROR", "账单数据读写失败")
 
 
 def make_record(**overrides) -> dict:
@@ -30,7 +36,7 @@ class DataFileTestCase(unittest.TestCase):
     """每个用例独立的临时数据文件；结束自动清理。"""
 
     def setUp(self) -> None:
-        self.temp_dir = Path(tempfile.mkdtemp(prefix="note-test-"))
+        self.temp_dir = Path(tempfile.mkdtemp(prefix="note-test-", dir=Path(__file__).resolve().parents[1]))
         self.addCleanup(shutil.rmtree, self.temp_dir, ignore_errors=True)
         self.data_file = self.temp_dir / "records.json"
 

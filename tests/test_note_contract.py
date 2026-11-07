@@ -215,22 +215,12 @@ class EndToEndApiTests(DataFileTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        from flask import Flask
-
-        from errors import register_error_handlers
-        from records import records_bp
+        from app import create_app
 
         self.statistics = load_statistics_module()
         self.queries = sys.modules["queries"]
 
-        app = Flask(__name__)
-        app.json.ensure_ascii = False
-        app.json.sort_keys = False
-        register_error_handlers(app)
-        app.register_blueprint(records_bp)
-        app.register_blueprint(self.queries.queries_bp)
-        app.register_blueprint(self.statistics.stats_bp)
-        app.testing = True
+        app = create_app({"TESTING": True})
         self.client = app.test_client()
 
     def test_readme_steps_1_to_8(self):
