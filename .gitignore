@@ -1,0 +1,15 @@
+# Local Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Personal ledger data and atomic-write temporary files
+/data/records.json
+/data/records-*.tmp
+
+# Local configuration and editor files
+.env
+.idea/
+.vscode/
