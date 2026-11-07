@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 实际账单数据与原子写入用的临时文件不提交（README §3.8）
+data/records.json
+data/.*.tmp
+!.gitkeep

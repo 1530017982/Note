@@ -1,0 +1,2 @@
+# 运行依赖（README 建议 Flask + 原生 JS，测试用标准库 unittest，无需额外依赖）
+Flask>=3.0
