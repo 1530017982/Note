@@ -5,7 +5,6 @@ from __future__ import annotations
 import shutil
 import tempfile
 import unittest
-import uuid
 from pathlib import Path
 from unittest.mock import patch
 
@@ -16,20 +15,6 @@ from errors import AppError
 def storage_error():
     """Construct a simulated failure using only the public AppError contract."""
     return AppError(500, "STORAGE_ERROR", "账单数据读写失败")
-
-
-def make_record(**overrides) -> dict:
-    """构造一条合法记录，便于数据层测试。"""
-    record = {
-        "id": str(uuid.uuid4()),
-        "date": "2026-11-07",
-        "type": "expense",
-        "amount": 1250,
-        "category": "饮食",
-        "note": "午餐",
-    }
-    record.update(overrides)
-    return record
 
 
 class DataFileTestCase(unittest.TestCase):
@@ -44,20 +29,8 @@ class DataFileTestCase(unittest.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def write_raw(self, text: str, encoding: str = "utf-8") -> None:
-        self.data_file.write_text(text, encoding=encoding)
-
     def read_raw(self) -> str:
         return self.data_file.read_text(encoding="utf-8")
-
-    def temp_files(self) -> list[Path]:
-        """残留的原子写入临时文件（正常流程不应出现）。"""
-        return [
-            path
-            for path in self.temp_dir.iterdir()
-            if path.name.endswith(".tmp")
-        ]
-
 
 def build_test_app():
     """用真实入口工厂构建测试客户端所属应用。"""

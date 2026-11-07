@@ -13,10 +13,9 @@
 
 ## 验证
 
-Python 3.12、Flask 3.1下，102项测试通过：原有查询/统计/入口存储47项，成员02新增的业务、存储及集成测试55项。
+Python 3.12、Flask 3.1下，精简后的79项测试通过，覆盖记账、查询、统计、存储及真实应用入口联调。重复存储和对接测试已整合到 tests/test_storage_app.py。
 
 ```powershell
-python -m unittest -v test_queries
 python -m unittest discover -s tests -t . -v
 ```
 

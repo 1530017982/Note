@@ -1,8 +1,7 @@
-"""查询模块合同测试。仅在测试中替代尚未提供的storage/errors。
+"""查询模块单元测试，使用隔离的存储和错误依赖。
 
-运行：python -m unittest -v test_queries.py
-需先安装Flask；本文件和queries.py放在同一目录。
-这些测试不验证真实JSON存储或组长app.py，联调仍需另外进行。
+运行：python -m unittest -v tests.test_queries
+真实 JSON 与应用入口的联调由 test_storage_app.py 验证。
 """
 
 import copy
@@ -28,7 +27,7 @@ errors_stub.AppError = ContractAppError
 storage_stub = types.ModuleType("storage")
 storage_stub.load_records = Mock()
 spec = importlib.util.spec_from_file_location(
-    "queries_under_test", Path(__file__).with_name("queries.py")
+    "queries_under_test", Path(__file__).resolve().parents[1] / "queries.py"
 )
 queries = importlib.util.module_from_spec(spec)
 with patch.dict(sys.modules, {"errors": errors_stub, "storage": storage_stub}):

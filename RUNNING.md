@@ -34,17 +34,13 @@ python -m venv .venv
 
 ## 验证
 
-团队测试分布在根目录和 `tests` 目录，需分别执行；上一条命令成功后再执行下一条。
+测试统一放在 `tests` 目录，一条命令运行全部测试：
 
 ```powershell
-& '.\.venv\Scripts\python.exe' -m unittest -v test_queries
-& '.\.venv\Scripts\python.exe' -m unittest discover -s tests -v
+& '.\.venv\Scripts\python.exe' -m unittest discover -s tests -t . -v
 ```
 
-本次集成验证采用 Python 3.12 与 Flask 3.1，在临时数据目录执行47项测试通过：
-查询19项、统计9项、存储及入口19项。
-存储/入口测试还覆盖了真实查询/统计模块与 JSON 文件的联合调用。
-查询和统计原有单元测试仍包含替身依赖；完整录入、删除与前端演示需待对应模块交付后验证。
+存储与入口集成测试统一放在 test_storage_app.py，覆盖真实查询、统计、新增和删除与 JSON 文件的联合调用。查询和统计的单元测试还使用替身依赖，用于隔离验证模块行为。
 
 可手动检查的只读接口：
 

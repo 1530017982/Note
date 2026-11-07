@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from threading import Thread
 import unittest
+from uuid import UUID
 from unittest.mock import patch
 
 from flask import request
@@ -43,6 +44,12 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(storage.load_records(), [])
         self.assertEqual(json.loads(self.path.read_text(encoding="utf-8")), [])
 
+    def test_record_ids_are_unique_uuid4_strings(self):
+        identifiers = {storage.new_record_id() for _ in range(200)}
+        self.assertEqual(len(identifiers), 200)
+        for identifier in identifiers:
+            self.assertEqual(UUID(identifier).version, 4)
+
     def test_save_load_unicode_and_independent_objects(self):
         original = [example_record()]
         storage.save_records(original)
@@ -63,7 +70,7 @@ class StorageTests(unittest.TestCase):
 
     def test_corrupt_existing_file_is_preserved_on_read_and_save(self):
         self.path.parent.mkdir(parents=True)
-        for content in (b"", b"not json", b"{}", b"[null]", b"\xff"):
+        for content in (b"", b"   \n\n", b"not json", b"{}", b"[null]", b"\xff"):
             with self.subTest(content=content):
                 self.path.write_bytes(content)
                 self.assert_storage_error(storage.load_records)
@@ -159,6 +166,31 @@ class ApplicationTests(unittest.TestCase):
         stats = self.client.get("/api/stats", query_string=query).get_json()["data"]
         self.assertEqual(listed["meta"]["total"], stats["count"])
         self.assertEqual(stats["balance"], -1250)
+
+    def test_create_query_stats_and_delete_use_same_application(self):
+        income = self.client.post("/api/records", json={
+            "date": "2026-11-07", "type": "income", "amount": 10000,
+            "category": "工资", "note": "",
+        })
+        expense = self.client.post("/api/records", json={
+            "date": "2026-11-07", "type": "expense", "amount": 1250,
+            "category": "饮食", "note": "",
+        })
+        self.assertEqual((income.status_code, expense.status_code), (201, 201))
+        income_id = income.get_json()["data"]["id"]
+        expense_id = expense.get_json()["data"]["id"]
+        listed = self.client.get("/api/records?limit=1").get_json()
+        self.assertEqual(listed["data"][0]["id"], expense_id)
+        self.assertEqual(listed["meta"]["total"], 2)
+        stats = self.client.get("/api/stats").get_json()["data"]
+        self.assertEqual((stats["income"], stats["expense"], stats["balance"]),
+                         (10000, 1250, 8750))
+        self.assertEqual(self.client.delete(f"/api/records/{expense_id}").status_code, 200)
+        self.assertEqual(self.client.delete(f"/api/records/{expense_id}").status_code, 404)
+        listed = self.client.get("/api/records?limit=all").get_json()["data"]
+        self.assertEqual([row["id"] for row in listed], [income_id])
+        stats = self.client.get("/api/stats").get_json()["data"]
+        self.assertEqual((stats["income"], stats["expense"], stats["count"]), (10000, 0, 1))
 
     def test_empty_queries_and_stats_initialize_storage(self):
         self.assertEqual(self.client.get("/api/records").get_json()["data"], [])

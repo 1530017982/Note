@@ -135,15 +135,17 @@ python3 -m venv .venv && \
 | 成员 | 学号 | GitHub | 负责内容 | 主要文件 |
 | --- | --- | --- | --- | --- |
 | 包学丰（组长） | 102401434 | [tw1l1ghtcc](https://github.com/tw1l1ghtcc) | 数据存储、公共异常、应用入口、模块整合及项目文档 | `app.py`、`storage.py`、`errors.py`、`requirements.txt`、`.gitignore`、`tests/test_storage_app.py`、`README.md` |
-| 冯玄 | 102401436 | [otto2-5-8](https://github.com/otto2-5-8) | 新增与删除账单、业务校验、记账测试及演示脚本 | `records.py`、`tests/test_records.py`、`tests/test_note_contract.py`、`tests/support.py`、`scripts/demo_records.py` |
-| 秦文贵 | 102401615 | [vg666-NiKo](https://github.com/vg666-NiKo) | 查询参数校验、组合筛选、排序与列表接口 | `queries.py`、`test_queries.py` |
+| 冯玄 | 102401436 | [otto2-5-8](https://github.com/otto2-5-8) | 新增与删除账单、业务校验、记账测试及演示脚本 | `records.py`、`tests/test_records.py`、`tests/support.py`、`scripts/demo_records.py` |
+| 秦文贵 | 102401615 | [vg666-NiKo](https://github.com/vg666-NiKo) | 查询参数校验、组合筛选、排序与列表接口 | `queries.py`、`tests/test_queries.py` |
 | 乔震宇 | 102401435 | [1530017982](https://github.com/1530017982) | 收支汇总、分类与月度统计、统计接口 | `statistics_service.py`、`tests/test_statistics_service.py` |
 | 吴圣洲 | 102401622 | [drkalerq](https://github.com/drkalerq) | 页面框架、录入表单、收支切换、金额换算与录入交互 | `templates/index.html`、`static/css/main.css`、`static/js/entry.js` |
 | 郑瀚 | 102401111 | [Kerical](https://github.com/Kerical) | 账单列表、筛选与删除交互、统计看板、图表及请求封装 | `static/js/list.js`、`static/js/dashboard.js`、`static/js/api.js`、`static/css/views.css` |
 
-`tests/test_storage.py` 由冯玄编写，存储模块相关维护由包学丰协调；页面容器由吴圣洲维护，列表及看板内容由郑瀚对接。
+存储与模块集成测试统一维护在 `tests/test_storage_app.py`；页面容器由吴圣洲维护，列表及看板内容由郑瀚对接。
 
 ## 项目结构
+
+每位成员的编程体验填写在 [docs/编程体验](docs/编程体验/README.md)，目录内已提供六份个人模板。
 
 ```text
 Note/
@@ -163,8 +165,7 @@ Note/
 │   └── js/                      # 录入、列表、看板和请求封装
 ├── scripts/
 │   └── demo_records.py          # 记账接口演示
-├── test_queries.py              # 查询测试
-└── tests/                       # 业务、存储、统计和集成测试
+└── tests/                       # 记账、查询、统计、存储和集成测试
 ```
 
 ## 数据保存
@@ -208,9 +209,6 @@ Note/
 
 ```powershell
 & {
-    & '.\.venv\Scripts\python.exe' -m unittest -v test_queries
-    if ($LASTEXITCODE -ne 0) { throw '查询测试失败' }
-
     & '.\.venv\Scripts\python.exe' -m unittest discover -s tests -t . -v
     if ($LASTEXITCODE -ne 0) { throw '后端及集成测试失败' }
 }
