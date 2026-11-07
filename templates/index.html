@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>记账本 · 个人收支记录</title>
+  <!-- 6号：引入 Chart.js，解决 Chart is not defined -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/static/css/main.css">
   <!-- 6号 负责的列表/统计样式，须在 main.css 之后引入 -->
   <link rel="stylesheet" href="/static/css/views.css">
@@ -17,7 +19,7 @@
   </header>
 
   <main class="wrap layout">
-    <!-- 录入区：5号负责 -->
+    <!-- 录入区：5号负责（6号不改动） -->
     <section class="card entry-card" aria-labelledby="entry-title">
       <div class="card-head">
         <h2 id="entry-title">记一笔</h2>
@@ -91,6 +93,10 @@
         <div id="filter-panel" class="panel-slot" aria-label="账单筛选"></div>
         <div id="list-message" class="message" role="status" aria-live="polite"></div>
         <div id="record-list" class="panel-slot" aria-label="账单列表"></div>
+        <div class="list-actions">
+          <button type="button" class="btn btn-ghost" id="show-all">查看全部记录</button>
+          <button type="button" class="btn btn-ghost" id="show-recent">只看最近10条</button>
+        </div>
       </section>
 
       <section class="card" aria-labelledby="stats-title">
@@ -118,6 +124,7 @@
     </div>
   </footer>
 
+  <!-- 5号录入（保留） + 6号看板 + 6号列表 -->
   <script type="module" src="/static/js/entry.js"></script>
   <script type="module" src="/static/js/dashboard.js"></script>
   <script type="module" src="/static/js/list.js"></script>

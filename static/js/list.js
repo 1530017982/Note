@@ -1,12 +1,14 @@
 // list.js —— 6号：列表渲染、筛选、删除
 // 导入 dashboard 的 refreshDashboard，不重复写统计逻辑
-// 筛选状态唯一维护，事件只触发一次刷新
+// 维护唯一筛选状态；初次加载、筛选/重置、records-changed 事件时同时刷新列表与看板
+// 列表 limit 单独保存，不传给统计
 // 切换筛选过快时通过请求序号防止旧响应覆盖新结果
 
+import { fetchJSON } from './api.js';
 import { refreshDashboard } from './dashboard.js';
 
 const state = { filters: {}, listLimit: 10 };
-let listReqId = 0;
+let reqId = 0;
 
 function yuan(cents) {
   return ((Number(cents) || 0) / 100).toFixed(2);
@@ -19,42 +21,33 @@ function buildFilterPanel() {
   panel.dataset.bound = '1';
 
   const startInput = document.createElement('input');
-  startInput.type = 'date';
-  startInput.id = 'f-start';
-  startInput.className = 'filter-input';
-
+  startInput.type = 'date'; startInput.id = 'f-start'; startInput.className = 'filter-input';
   const endInput = document.createElement('input');
-  endInput.type = 'date';
-  endInput.id = 'f-end';
-  endInput.className = 'filter-input';
-
+  endInput.type = 'date'; endInput.id = 'f-end'; endInput.className = 'filter-input';
   const typeSelect = document.createElement('select');
-  typeSelect.id = 'f-type';
-  typeSelect.className = 'filter-input';
+  typeSelect.id = 'f-type'; typeSelect.className = 'filter-input';
   typeSelect.innerHTML = '<option value="">全部</option><option value="income">收入</option><option value="expense">支出</option>';
-
   const catInput = document.createElement('input');
-  catInput.type = 'text';
-  catInput.id = 'f-cat';
-  catInput.className = 'filter-input';
-  catInput.placeholder = '类别';
+  catInput.type = 'text'; catInput.id = 'f-cat'; catInput.className = 'filter-input'; catInput.placeholder = '类别';
+
+  // 最低 / 最高金额（单位元，提交时转分）
+  const minInput = document.createElement('input');
+  minInput.type = 'number'; minInput.id = 'f-min'; minInput.className = 'filter-input';
+  minInput.placeholder = '最低金额(元)'; minInput.min = '0';
+  const maxInput = document.createElement('input');
+  maxInput.type = 'number'; maxInput.id = 'f-max'; maxInput.className = 'filter-input';
+  maxInput.placeholder = '最高金额(元)'; maxInput.min = '0';
 
   const applyBtn = document.createElement('button');
-  applyBtn.type = 'button';
-  applyBtn.id = 'f-apply';
-  applyBtn.className = 'btn btn-primary';
-  applyBtn.textContent = '筛选';
-
+  applyBtn.type = 'button'; applyBtn.id = 'f-apply'; applyBtn.className = 'btn btn-primary'; applyBtn.textContent = '筛选';
   const resetBtn = document.createElement('button');
-  resetBtn.type = 'button';
-  resetBtn.id = 'f-reset';
-  resetBtn.className = 'btn btn-ghost';
-  resetBtn.textContent = '重置';
+  resetBtn.type = 'button'; resetBtn.id = 'f-reset'; resetBtn.className = 'btn btn-ghost'; resetBtn.textContent = '重置';
 
-  const grid = document.createElement('div');
-  grid.className = 'filter-grid';
-  grid.append(startInput, endInput, typeSelect, catInput, applyBtn, resetBtn);
-  panel.appendChild(grid);
+  const grid1 = document.createElement('div'); grid1.className = 'filter-grid';
+  grid1.append(startInput, endInput, typeSelect, catInput);
+  const grid2 = document.createElement('div'); grid2.className = 'filter-grid';
+  grid2.append(minInput, maxInput, applyBtn, resetBtn);
+  panel.append(grid1, grid2);
 
   applyBtn.addEventListener('click', () => {
     state.filters = readFilters();
@@ -63,9 +56,8 @@ function buildFilterPanel() {
 
   resetBtn.addEventListener('click', () => {
     state.filters = {};
-    ['f-start', 'f-end', 'f-type', 'f-cat'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
+    ['f-start','f-end','f-type','f-cat','f-min','f-max'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
     });
     refreshAll();
   });
@@ -78,33 +70,33 @@ function readFilters() {
   const e = v('f-end');   if (e) f.end_date = e;
   const t = v('f-type');  if (t) f.type = t;
   const c = v('f-cat');   if (c) f.category = c;
+  // 金额转整数分（后端 FILTER_KEYS 用分）
+  const minRaw = v('f-min');
+  if (minRaw !== '' && minRaw != null) f.min_amount = String(Math.round(parseFloat(minRaw) * 100));
+  const maxRaw = v('f-max');
+  if (maxRaw !== '' && maxRaw != null) f.max_amount = String(Math.round(parseFloat(maxRaw) * 100));
   return f;
 }
 
 // ---------- 列表加载与渲染 ----------
 async function loadRecords() {
-  const myId = ++listReqId;
+  const myId = ++reqId;
   const params = new URLSearchParams();
   for (const [k, v] of Object.entries(state.filters)) if (v) params.append(k, v);
-  params.append('limit', String(state.listLimit));
+  // limit 单独给列表，不进统计
+  params.append('limit', state.listLimit === 'all' ? 'all' : String(state.listLimit));
 
   const listMsg = document.getElementById('list-message');
   if (listMsg) { listMsg.textContent = '加载中…'; listMsg.className = 'message'; }
 
   try {
-    const res = await fetch(`/api/records?${params.toString()}`);
-    if (myId !== listReqId) return;
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `LIST_${res.status}`);
-    }
-    const json = await res.json();
-    if (myId !== listReqId) return;
+    const json = await fetchJSON(`/api/records?${params.toString()}`);
+    if (myId !== reqId) return;
     const records = (json && json.data) ? json.data : [];
     renderList(records);
     if (listMsg) { listMsg.textContent = ''; listMsg.className = 'message'; }
   } catch (err) {
-    if (myId !== listReqId) return;
+    if (myId !== reqId) return;
     console.warn(err);
     if (listMsg) { listMsg.textContent = err.message || '账单加载失败，请核对后重试'; listMsg.className = 'message error'; }
   }
@@ -144,6 +136,7 @@ function renderList(records) {
     info.appendChild(dateSpan);
     info.appendChild(catSpan);
 
+    // 备注用 textContent，不拼 innerHTML
     if (r.note) {
       const noteSpan = document.createElement('span');
       noteSpan.className = 'record-note';
@@ -162,6 +155,7 @@ function renderList(records) {
     delBtn.className = 'del-btn';
     delBtn.type = 'button';
     delBtn.textContent = '删除';
+    // 闭包绑定，不拼 onclick，UUID 无引号问题
     delBtn.addEventListener('click', () => deleteRecord(r.id));
 
     right.appendChild(amt);
@@ -181,9 +175,8 @@ async function deleteRecord(id) {
   try {
     const res = await fetch(`/api/records/${encodeURIComponent(id)}`, { method: 'DELETE' });
     if (res.ok) {
-      document.dispatchEvent(new CustomEvent('records-changed', {
-        detail: { action: 'deleted', id }
-      }));
+      // 6号删除成功触发 records-changed，action=deleted，保持当前筛选
+      document.dispatchEvent(new CustomEvent('records-changed', { detail: { action: 'deleted', id } }));
     } else if (res.status === 404) {
       alert('该记录已不存在');
       refreshAll();
@@ -199,14 +192,20 @@ async function deleteRecord(id) {
 // ---------- 统一刷新 ----------
 function refreshAll() {
   loadRecords();
-  refreshDashboard(state.filters);
+  refreshDashboard(state.filters); // 统计不带 limit
 }
 
-// 监听 records-changed（5号新增成功也会触发）
+// 监听 records-changed（5号新增 / 6号删除 均触发，只触发一次刷新）
 document.addEventListener('records-changed', refreshAll);
 
-// 初始化
+// ---------- 初始化 ----------
 window.addEventListener('DOMContentLoaded', () => {
   buildFilterPanel();
+
+  const showAll = document.getElementById('show-all');
+  const showRecent = document.getElementById('show-recent');
+  if (showAll) showAll.addEventListener('click', () => { state.listLimit = 'all'; loadRecords(); });
+  if (showRecent) showRecent.addEventListener('click', () => { state.listLimit = 10; loadRecords(); });
+
   refreshAll();
 });

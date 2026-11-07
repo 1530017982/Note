@@ -1,10 +1,14 @@
 // dashboard.js —— 6号：统计看板 + 图表
 // 导出 refreshDashboard(filters)，由 list.js 调用
-// 不自行初始化请求，不绑定事件，不在 HTML 中重复载入
+// 不在 HTML 中重复载入，不自行初始化请求，不绑定事件
+// filters：六键可选筛选（start_date/end_date/type/category/min_amount/max_amount），缺失/空值不发送
+// 金额为整数分；列表的 limit 不传给统计
+
+import { fetchJSON } from './api.js';
 
 let catChartInst = null;
 let monChartInst = null;
-let statsReqId = 0;
+let reqId = 0;
 
 function yuan(cents) {
   return ((Number(cents) || 0) / 100).toFixed(2);
@@ -16,7 +20,7 @@ function destroyCharts() {
 }
 
 export async function refreshDashboard(filters = {}) {
-  const myId = ++statsReqId;
+  const myId = ++reqId;
   const params = new URLSearchParams();
   for (const [k, v] of Object.entries(filters)) {
     if (v !== '' && v != null) params.append(k, v);
@@ -26,16 +30,10 @@ export async function refreshDashboard(filters = {}) {
   const statsMsg = document.getElementById('stats-message');
 
   try {
-    const res = await fetch(`/api/stats?${params.toString()}`);
-    if (myId !== statsReqId) return; // 旧请求，丢弃
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `STATS_${res.status}`);
-    }
-    const json = await res.json();
-    if (myId !== statsReqId) return;
-    const d = (json && json.data) ? json.data : {};
+    const data = await fetchJSON(`/api/stats?${params.toString()}`);
+    if (myId !== reqId) return; // 旧请求丢弃，防过快切换覆盖
 
+    const d = data.data || {};
     const income = d.income || 0;
     const expense = d.expense || 0;
     const balance = d.balance ?? (income - expense);
@@ -55,11 +53,12 @@ export async function refreshDashboard(filters = {}) {
 
     if (statsMsg) { statsMsg.textContent = ''; statsMsg.className = 'message'; }
 
+    // 图表：按后端返回 data.by_category / data.by_month
     renderCategoryChart(d.by_category || []);
     renderMonthlyChart(d.by_month || []);
 
   } catch (err) {
-    if (myId !== statsReqId) return;
+    if (myId !== reqId) return;
     console.warn('统计加载失败', err);
     if (statsMsg) {
       statsMsg.textContent = err.message || '统计加载失败，请核对后重试';
