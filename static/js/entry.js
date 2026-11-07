@@ -235,7 +235,7 @@ async function handleSubmit(event) {
       }),
     );
   } catch (networkError) {
-    setMessage("网络异常，未保存成功。请确认服务已启动后重试。", "error");
+    setMessage("网络异常，暂时无法确认保存结果。请先刷新账单核对，再决定是否重试。", "error");
   } finally {
     submitting = false;
     if (submitButton) {
