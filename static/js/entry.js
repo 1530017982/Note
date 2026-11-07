@@ -253,7 +253,7 @@ function initEntryForm() {
     dateInput.value = localToday();
   }
   form.addEventListener("submit", handleSubmit);
-  [amountInput, categoryInput, noteInput].forEach((input) => {
+  [dateInput, amountInput, categoryInput, noteInput].forEach((input) => {
     if (input) {
       input.addEventListener("input", () => markInvalid(input, false));
     }

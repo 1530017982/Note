@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>记账本 · 个人收支记录</title>
   <link rel="stylesheet" href="/static/css/main.css">
+  <!-- 6号 负责的列表/统计样式，须在 main.css 之后引入 -->
+  <link rel="stylesheet" href="/static/css/views.css">
 </head>
 <body>
   <header class="site-header">
@@ -53,7 +55,7 @@
         <div class="field">
           <label for="record-category">类别</label>
           <input id="record-category" name="category" type="text" list="category-options"
-                 maxlength="20" autocomplete="off" placeholder="饮食 / 交通 / 购物……" required>
+                 autocomplete="off" placeholder="饮食 / 交通 / 购物……" required>
           <datalist id="category-options">
             <option value="饮食"></option>
             <option value="交通"></option>
@@ -66,7 +68,7 @@
 
         <div class="field">
           <label for="record-note">备注<span class="optional">（可选）</span></label>
-          <input id="record-note" name="note" type="text" maxlength="200"
+          <input id="record-note" name="note" type="text"
                  autocomplete="off" placeholder="例如：公司楼下午餐">
           <p class="hint">最多 200 个字符</p>
         </div>
