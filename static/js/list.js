@@ -32,11 +32,11 @@ function buildFilterPanel() {
 
   // 最低 / 最高金额（单位元，提交时转分）
   const minInput = document.createElement('input');
-  minInput.type = 'number'; minInput.id = 'f-min'; minInput.className = 'filter-input';
-  minInput.placeholder = '最低金额(元)'; minInput.min = '0';
+  minInput.type = 'text'; minInput.inputMode = 'decimal'; minInput.id = 'f-min'; minInput.className = 'filter-input';
+  minInput.placeholder = '最低金额(元)';
   const maxInput = document.createElement('input');
-  maxInput.type = 'number'; maxInput.id = 'f-max'; maxInput.className = 'filter-input';
-  maxInput.placeholder = '最高金额(元)'; maxInput.min = '0';
+  maxInput.type = 'text'; maxInput.inputMode = 'decimal'; maxInput.id = 'f-max'; maxInput.className = 'filter-input';
+  maxInput.placeholder = '最高金额(元)';
 
   const applyBtn = document.createElement('button');
   applyBtn.type = 'button'; applyBtn.id = 'f-apply'; applyBtn.className = 'btn btn-primary'; applyBtn.textContent = '筛选';
@@ -50,7 +50,18 @@ function buildFilterPanel() {
   panel.append(grid1, grid2);
 
   applyBtn.addEventListener('click', () => {
-    state.filters = readFilters();
+    let filters;
+    try {
+      filters = readFilters();
+    } catch (error) {
+      const message = document.getElementById('list-message');
+      if (message) {
+        message.textContent = error.message;
+        message.className = 'message error';
+      }
+      return; // 保留上次有效筛选，不发送错误请求
+    }
+    state.filters = filters;
     refreshAll();
   });
 
@@ -63,6 +74,21 @@ function buildFilterPanel() {
   });
 }
 
+// 通过拼接整数位与小数位精确换算为分，不舍入、不做浮点乘法。
+function parseFilterAmount(raw, label) {
+  const text = String(raw ?? '').trim();
+  if (text === '') return null;
+  if (!/^[0-9]+(?:\.[0-9]{1,2})?$/.test(text)) {
+    throw new Error(label + '须为非负金额，最多两位小数，例如 12.50');
+  }
+  const [whole, fraction = ''] = text.split('.');
+  const digits = (whole + fraction.padEnd(2, '0')).replace(/^0+/, '') || '0';
+  if (digits.length > 9 || Number(digits) > 999999999) {
+    throw new Error(label + '须在 0 到 9,999,999.99 元之间');
+  }
+  return digits;
+}
+
 function readFilters() {
   const f = {};
   const v = id => document.getElementById(id)?.value?.trim();
@@ -70,11 +96,14 @@ function readFilters() {
   const e = v('f-end');   if (e) f.end_date = e;
   const t = v('f-type');  if (t) f.type = t;
   const c = v('f-cat');   if (c) f.category = c;
-  // 金额转整数分（后端 FILTER_KEYS 用分）
-  const minRaw = v('f-min');
-  if (minRaw !== '' && minRaw != null) f.min_amount = String(Math.round(parseFloat(minRaw) * 100));
-  const maxRaw = v('f-max');
-  if (maxRaw !== '' && maxRaw != null) f.max_amount = String(Math.round(parseFloat(maxRaw) * 100));
+  // 筛选金额允许0；非空值精确换算为整数分。
+  const minimum = parseFilterAmount(v('f-min'), '最低金额');
+  const maximum = parseFilterAmount(v('f-max'), '最高金额');
+  if (minimum !== null) f.min_amount = minimum;
+  if (maximum !== null) f.max_amount = maximum;
+  if (minimum !== null && maximum !== null && Number(minimum) > Number(maximum)) {
+    throw new Error('最高金额不能小于最低金额');
+  }
   return f;
 }
 
