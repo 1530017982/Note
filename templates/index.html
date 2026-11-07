@@ -56,16 +56,12 @@
 
         <div class="field">
           <label for="record-category">类别</label>
-          <input id="record-category" name="category" type="text" list="category-options"
-                 autocomplete="off" placeholder="饮食 / 交通 / 购物……" required>
-          <datalist id="category-options">
-            <option value="饮食"></option>
-            <option value="交通"></option>
-            <option value="购物"></option>
-            <option value="工资"></option>
-            <option value="其他"></option>
-          </datalist>
-          <p class="hint">也可自行输入，1—20 个字符</p>
+          <select id="record-category" name="category" required>
+            <option value="">请选择类别</option>
+            <option value="工资">工资</option>
+            <option value="其他">其他</option>
+          </select>
+          <p class="hint">类别随收入或支出类型切换</p>
         </div>
 
         <div class="field">

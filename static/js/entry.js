@@ -14,6 +14,10 @@
 const MAX_AMOUNT_CENTS = 999999999;
 const MAX_NOTE_LENGTH = 200;
 const MAX_CATEGORY_LENGTH = 20;
+const CATEGORY_OPTIONS = {
+  income: ["饮食", "交通", "购物", "住房", "其他"],
+  expense: ["工资", "其他"],
+};
 
 const form = document.querySelector("#record-form");
 const messageBox = document.querySelector("#record-message");
@@ -109,6 +113,26 @@ function clearMarks() {
   [dateInput, amountInput, categoryInput, noteInput].forEach((input) => markInvalid(input, false));
 }
 
+/** 收支类型使用各自的类别；切换时清除不属于新类型的已选类别。 */
+function syncCategoryOptions() {
+  if (!form || !categoryInput) return;
+  const type = form.querySelector('input[name="type"]:checked')?.value;
+  const categories = CATEGORY_OPTIONS[type] || [];
+  const previous = categoryInput.value;
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "请选择类别";
+  categoryInput.replaceChildren(placeholder);
+  categories.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category;
+    categoryInput.appendChild(option);
+  });
+  categoryInput.value = categories.includes(previous) ? previous : "";
+  markInvalid(categoryInput, false);
+}
+
 /**
  * 读取表单并做提交前校验，返回 { payload } 或 { error, field, input }。
  * 后端仍是最终校验依据，这里只是减少无效请求。
@@ -133,7 +157,10 @@ function readForm() {
   }
 
   if (codePointLength(category) < 1) {
-    return { error: "请填写类别", field: "category", input: categoryInput };
+    return { error: "请选择类别", field: "category", input: categoryInput };
+  }
+  if (!CATEGORY_OPTIONS[type].includes(category)) {
+    return { error: "请选择当前收支类型对应的类别", field: "category", input: categoryInput };
   }
   if (codePointLength(category) > MAX_CATEGORY_LENGTH) {
     return { error: `类别最多 ${MAX_CATEGORY_LENGTH} 个字符`, field: "category", input: categoryInput };
@@ -252,6 +279,10 @@ function initEntryForm() {
   if (dateInput && dateInput.value === "") {
     dateInput.value = localToday();
   }
+  syncCategoryOptions();
+  form.querySelectorAll('input[name="type"]').forEach((input) => {
+    input.addEventListener("change", syncCategoryOptions);
+  });
   form.addEventListener("submit", handleSubmit);
   [dateInput, amountInput, categoryInput, noteInput].forEach((input) => {
     if (input) {
